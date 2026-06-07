@@ -1,0 +1,248 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useShelter } from '../../context/ShelterContext'
+import api from '../../api/axios'
+
+function SectionTitle({ children }) {
+    return (
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+            {children}
+        </h3>
+    )
+}
+
+function FormField({ label, required, children }) {
+    return (
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {label}
+                {required && <span className="text-red-400 ml-1">*</span>}
+            </label>
+            {children}
+        </div>
+    )
+}
+
+export default function ShelterCampaignCreate() {
+    const { shelter, shelterToken } = useShelter()
+    const navigate = useNavigate()
+
+    const [form, setForm] = useState({
+        title:       '',
+        description: '',
+        goal_amount: '',
+        end_date:    '',
+        animal_id:   '',
+    })
+
+    const [animals, setAnimals]     = useState([])
+    const [error, setError]         = useState(null)
+    const [loading, setLoading]     = useState(false)
+
+    useEffect(() => {
+        fetchAnimals()
+    }, [])
+
+    const fetchAnimals = async () => {
+        try {
+            const { data } = await api.get(`/animals?shelter_id=${shelter.id}&status=available`, {
+                headers: { Authorization: `Bearer ${shelterToken}` }
+            })
+            setAnimals(data.data?.data || data.data || [])
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
+
+    const handleSubmit = async () => {
+        setError(null)
+
+        if (!form.title)       return setError('El título es obligatorio')
+        if (!form.description) return setError('La descripción es obligatoria')
+        if (!form.goal_amount) return setError('El objetivo económico es obligatorio')
+        if (!form.end_date)    return setError('La fecha de fin es obligatoria')
+
+        setLoading(true)
+        try {
+            await api.post('/campaigns', {
+                title:       form.title,
+                description: form.description,
+                goal_amount: parseFloat(form.goal_amount),
+                end_date:    form.end_date,
+                animal_id:   form.animal_id || null,
+            }, {
+                headers: { Authorization: `Bearer ${shelterToken}` }
+            })
+            navigate('/shelter/campaigns')
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error al crear la campaña')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const minDate = tomorrow.toISOString().split('T')[0]
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-2xl mx-auto px-4 py-8">
+
+                {/* Cabecera */}
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => navigate('/shelter/campaigns')}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        ← Volver
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Nueva campaña</h1>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                            Recauda fondos para los animales de tu protectora
+                        </p>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-6">
+
+                    {/* Información básica */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <SectionTitle>Información de la campaña</SectionTitle>
+                        <div className="flex flex-col gap-5">
+
+                            <FormField label="Título" required>
+                                <input
+                                    type="text"
+                                    value={form.title}
+                                    onChange={e => set('title', e.target.value)}
+                                    placeholder="Ej: Ayuda a Lulú a recuperarse"
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                />
+                            </FormField>
+
+                            <FormField label="Descripción" required>
+                                <textarea
+                                    value={form.description}
+                                    onChange={e => set('description', e.target.value)}
+                                    placeholder="Explica para qué se usarán los fondos recaudados..."
+                                    rows={4}
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none"
+                                />
+                            </FormField>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField label="Objetivo (€)" required>
+                                    <input
+                                        type="number"
+                                        value={form.goal_amount}
+                                        onChange={e => set('goal_amount', e.target.value)}
+                                        placeholder="Ej: 500"
+                                        min="1"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    />
+                                </FormField>
+
+                                <FormField label="Fecha de fin" required>
+                                    <input
+                                        type="date"
+                                        value={form.end_date}
+                                        onChange={e => set('end_date', e.target.value)}
+                                        min={minDate}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    />
+                                </FormField>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Animal vinculado */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <SectionTitle>Animal vinculado (opcional)</SectionTitle>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Puedes vincular esta campaña a uno de tus animales disponibles.
+                        </p>
+
+                        {animals.length === 0 ? (
+                            <p className="text-sm text-gray-400 italic">
+                                No tienes animales disponibles para vincular
+                            </p>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {/* Opción sin animal */}
+                                <button
+                                    type="button"
+                                    onClick={() => set('animal_id', '')}
+                                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-sm transition-colors ${
+                                        form.animal_id === ''
+                                            ? 'bg-amber-500 text-white border-amber-500'
+                                            : 'border-gray-200 text-gray-500 hover:border-amber-300'
+                                    }`}
+                                >
+                                    <span className="text-2xl">💛</span>
+                                    <span className="font-medium text-xs">Sin animal</span>
+                                </button>
+
+                                {animals.map(animal => (
+                                    <button
+                                        key={animal.id}
+                                        type="button"
+                                        onClick={() => set('animal_id', animal.id)}
+                                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-sm transition-colors ${
+                                            form.animal_id === animal.id
+                                                ? 'bg-amber-500 text-white border-amber-500'
+                                                : 'border-gray-200 text-gray-600 hover:border-amber-300'
+                                        }`}
+                                    >
+                                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                                            {animal.image_url ? (
+                                                <img
+                                                    src={animal.image_url}
+                                                    alt={animal.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-lg">
+                                                    {animal.species === 'dog' ? '🐕' : '🐈'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="font-medium text-xs truncate w-full text-center">
+                                            {animal.name}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Botones */}
+                    <div className="flex gap-3 justify-end pb-8">
+                        <button
+                            onClick={() => navigate('/shelter/campaigns')}
+                            className="px-6 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-xl text-sm font-medium transition-colors"
+                        >
+                            {loading ? 'Creando campaña...' : 'Crear campaña'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
