@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useShelter } from '../../context/ShelterContext'
 import api from '../../api/axios'
+import ImageUpload from '../../components/common/ImageUpload'
 
 const speciesOptions = [
     { value: 'dog', label: 'Perro', icon: '🐕' },
@@ -90,9 +91,9 @@ function Toggle({ label, checked, onChange }) {
         <label className="flex items-center gap-3 cursor-pointer group">
             <div
                 onClick={() => onChange(!checked)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-amber-500' : 'bg-gray-200'}`}
+                className={'relative w-11 h-6 rounded-full transition-colors ' + (checked ? 'bg-amber-500' : 'bg-gray-200')}
             >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+                <div className={'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ' + (checked ? 'translate-x-5' : 'translate-x-0')} />
             </div>
             <span className="text-sm text-gray-700 group-hover:text-gray-900">
                 {label}
@@ -118,38 +119,30 @@ export default function ShelterAnimalCreate() {
         good_with_dogs:      false,
         good_with_strangers: false,
         special_needs:       false,
-        // Perro
-        size:             '',
-        activity_level:   '',
-        max_hours_alone:  '',
-        // Gato
-        cat_companion_type: '',
-        indoor_only:        false,
+        size:                '',
+        activity_level:      '',
+        max_hours_alone:     '',
+        cat_companion_type:  '',
+        indoor_only:         false,
     })
 
     const [error, setError]     = useState(null)
     const [loading, setLoading] = useState(false)
-    const [preview, setPreview] = useState(null)
 
     const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }))
-
-    const handleImageUrl = (url) => {
-        set('image_url', url)
-        setPreview(url || null)
-    }
 
     const handleSubmit = async () => {
         setError(null)
 
-        if (!form.name)     return setError('El nombre es obligatorio')
-        if (!form.species)  return setError('La especie es obligatoria')
-        if (!form.gender)   return setError('El género es obligatorio')
+        if (!form.name)      return setError('El nombre es obligatorio')
+        if (!form.species)   return setError('La especie es obligatoria')
+        if (!form.gender)    return setError('El género es obligatorio')
         if (!form.age_range) return setError('El rango de edad es obligatorio')
 
         setLoading(true)
         try {
             await api.post('/animals', form, {
-                headers: { Authorization: `Bearer ${shelterToken}` }
+                headers: { Authorization: 'Bearer ' + shelterToken }
             })
             navigate('/shelter/animals')
         } catch (err) {
@@ -223,11 +216,11 @@ export default function ShelterAnimalCreate() {
                                                 set('species', opt.value)
                                                 set('age_range', '')
                                             }}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                                            className={'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-colors ' + (
                                                 form.species === opt.value
                                                     ? 'bg-amber-500 text-white border-amber-500'
                                                     : 'border-gray-200 text-gray-600 hover:border-amber-300'
-                                            }`}
+                                            )}
                                         >
                                             <span className="text-lg">{opt.icon}</span>
                                             {opt.label}
@@ -244,11 +237,11 @@ export default function ShelterAnimalCreate() {
                                             key={opt.value}
                                             type="button"
                                             onClick={() => set('gender', opt.value)}
-                                            className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                                            className={'flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors ' + (
                                                 form.gender === opt.value
                                                     ? 'bg-amber-500 text-white border-amber-500'
                                                     : 'border-gray-200 text-gray-600 hover:border-amber-300'
-                                            }`}
+                                            )}
                                         >
                                             {opt.label}
                                         </button>
@@ -265,7 +258,6 @@ export default function ShelterAnimalCreate() {
                                     placeholder={form.species ? 'Selecciona una edad' : 'Primero selecciona la especie'}
                                 />
                             </FormField>
-
                         </div>
 
                         {/* Descripción */}
@@ -285,37 +277,11 @@ export default function ShelterAnimalCreate() {
                     {/* Foto */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <SectionTitle>Foto</SectionTitle>
-                        <div className="flex gap-5 items-start">
-                            {/* Preview */}
-                            <div className="w-32 h-32 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
-                                {preview ? (
-                                    <img
-                                        src={preview}
-                                        alt="Preview"
-                                        className="w-full h-full object-cover"
-                                        onError={() => setPreview(null)}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-4xl text-gray-300">
-                                        {form.species === 'dog' ? '🐕' : form.species === 'cat' ? '🐈' : '🐾'}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <FormField label="URL de la imagen">
-                                    <input
-                                        type="url"
-                                        value={form.image_url}
-                                        onChange={e => handleImageUrl(e.target.value)}
-                                        placeholder="https://ejemplo.com/foto-del-animal.jpg"
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                                    />
-                                </FormField>
-                                <p className="text-xs text-gray-400 mt-2">
-                                    Pega la URL de una imagen. La preview se actualizará automáticamente.
-                                </p>
-                            </div>
-                        </div>
+                        <ImageUpload
+                            value={form.image_url}
+                            onChange={v => set('image_url', v)}
+                            placeholder="Subir foto del animal"
+                        />
                     </div>
 
                     {/* Comportamiento social */}

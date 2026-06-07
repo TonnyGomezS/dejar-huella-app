@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useShelter } from '../../context/ShelterContext'
 import api from '../../api/axios'
+import ImageUpload from '../../components/common/ImageUpload'
 
 export default function ShelterRegister() {
     const { loginShelter } = useShelter()
@@ -9,7 +10,7 @@ export default function ShelterRegister() {
 
     const [form, setForm] = useState({
         name: '', email: '', password: '', password_confirmation: '',
-        description: '', address: '', phone: '',
+        description: '', address: '', phone: '', image_url: '',
         autonomous_community: '', province: '', municipality: ''
     })
     const [error, setError]     = useState(null)
@@ -194,6 +195,19 @@ export default function ShelterRegister() {
                             />
                         </div>
 
+                        {/* Imagen */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Logo o imagen de portada
+                                <span className="text-gray-400 font-normal ml-1">(opcional)</span>
+                            </label>
+                            <ImageUpload
+                                value={form.image_url}
+                                onChange={v => setForm(prev => ({ ...prev, image_url: v }))}
+                                placeholder="Subir imagen de la protectora"
+                            />
+                        </div>
+
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
                             Ubicación
                         </p>
@@ -254,8 +268,7 @@ export default function ShelterRegister() {
 
                     <p className="mt-8 text-sm text-center text-gray-500">
                         ¿Ya tienes cuenta?{' '}
-                        <Link to="/shelters/login"
-                            className="text-rose-600 font-medium hover:underline">
+                        <Link to="/shelters/login" className="text-rose-600 font-medium hover:underline">
                             Inicia sesión
                         </Link>
                     </p>
