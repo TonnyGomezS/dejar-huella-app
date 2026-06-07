@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,13 +13,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+            $table->id(); // ID autoincremental (será la PK de nuestra tabla)
+            $table->string('name'); // nombre del usuario
+            $table->string('email')->unique(); // email del usuario
+            $table->string('password'); // contraseña
+            $table->timestamp('email_verified_at')->nullable(); // registro de emails auténticos
+            $table->string('phone')->nullable(); // teléfono de contacto
+            $table->string('role')->default(UserRole::USER->value); // roles: usuario estándar o administrador
+            $table->rememberToken(); // Permite mantener la sesión activa cuando el usuario marca la opción "recuérdame" al iniciar sesión
+            $table->timestamps(); // Crea los campos 'created_at' y 'updated_at' de manera automática
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
