@@ -1,0 +1,294 @@
+Casos de uso de "Deja tu Huella"
+
+CU-01: Registrar usuario
+Actor: Usuario no registrado
+Precondición: El usuario no tiene cuenta
+Flujo principal:
+
+El usuario accede a la página de registro
+Rellena nombre, email, contraseña y ubicación opcional
+El sistema valida los datos y crea la cuenta
+El sistema redirige al dashboard del usuario
+
+Flujo alternativo: Si el email ya existe el sistema muestra un error
+
+CU-02: Iniciar sesión (usuario)
+Actor: Usuario registrado
+Precondición: El usuario tiene cuenta activa
+Flujo principal:
+
+El usuario introduce email y contraseña
+El sistema valida las credenciales y genera un token
+El sistema redirige al dashboard
+
+Flujo alternativo: Si las credenciales son incorrectas muestra error
+
+CU-03: Registrar protectora
+Actor: Representante de protectora
+Precondición: La protectora no está registrada
+Flujo principal:
+
+El representante rellena nombre, email, contraseña, dirección, ubicación e imagen opcional
+El sistema crea la cuenta y redirige al dashboard de la protectora
+
+
+CU-04: Iniciar sesión (protectora)
+Actor: Protectora registrada
+Precondición: La protectora tiene cuenta activa
+Flujo principal:
+
+La protectora introduce email y contraseña
+El sistema valida y redirige al dashboard
+
+
+CU-05: Completar perfil de compatibilidad
+Actor: Usuario autenticado
+Precondición: El usuario ha iniciado sesión
+Flujo principal:
+
+El usuario accede a su perfil de compatibilidad
+Selecciona la especie (perro o gato)
+Rellena el formulario con vivienda, tiempo libre, experiencia y situación en casa
+El sistema guarda el perfil y redirige al catálogo de la especie correspondiente
+
+Flujo alternativo: Si ya tiene perfil puede actualizarlo en cualquier momento
+
+CU-06: Explorar catálogo de animales
+Actor: Cualquier visitante
+Precondición: Ninguna
+Flujo principal:
+
+El visitante accede al catálogo de perros o gatos
+Aplica filtros opcionales (raza, edad, tamaño, etc.)
+El sistema muestra los animales disponibles
+Si el usuario tiene perfil de compatibilidad los resultados se ordenan por porcentaje de compatibilidad
+Si no tiene perfil se ordenan por ubicación y fecha
+
+
+CU-07: Ver ficha de un animal
+Actor: Cualquier visitante
+Precondición: Ninguna
+Flujo principal:
+
+El visitante hace clic en un animal del catálogo
+El sistema muestra la ficha completa con foto, descripción, características y convivencia
+Si el visitante está autenticado puede enviar una solicitud
+
+
+CU-08: Enviar solicitud de adopción/acogida/apadrinamiento
+Actor: Usuario autenticado
+Precondición: El usuario ha iniciado sesión y el animal está disponible
+Flujo principal:
+
+El usuario accede a la ficha del animal
+Selecciona el tipo de solicitud (adopción, acogida o apadrinamiento)
+Escribe un mensaje opcional
+El sistema crea la solicitud y cambia el estado del animal a "en evaluación"
+La protectora recibe una notificación
+
+Flujo alternativo: Si ya existe una solicitud activa del mismo tipo el sistema lo indica
+
+CU-09: Cancelar solicitud
+Actor: Usuario autenticado
+Precondición: La solicitud está en estado pendiente
+Flujo principal:
+
+El usuario accede a "Mis solicitudes"
+Selecciona una solicitud pendiente y pulsa cancelar
+El sistema cambia el estado a cancelado
+Si no quedan solicitudes pendientes el animal vuelve a estado disponible
+
+
+CU-10: Gestionar solicitudes recibidas
+Actor: Protectora autenticada
+Precondición: La protectora tiene solicitudes pendientes
+Flujo principal:
+
+La protectora accede a su panel de solicitudes
+Filtra por estado si lo desea
+Revisa las solicitudes agrupadas por animal
+Acepta o rechaza cada solicitud
+Al aceptar el sistema cambia el estado del animal y rechaza automáticamente las demás solicitudes pendientes
+El usuario recibe una notificación con el resultado
+
+
+CU-11: Publicar un animal
+Actor: Protectora autenticada
+Precondición: La protectora ha iniciado sesión
+Flujo principal:
+
+La protectora accede a su panel de animales
+Pulsa "Publicar animal"
+Rellena nombre, especie, género, edad, descripción e imagen
+Rellena las características específicas de la especie
+El sistema publica el animal con estado "disponible"
+
+
+CU-12: Editar animal
+Actor: Protectora autenticada
+Precondición: El animal pertenece a la protectora
+Flujo principal:
+
+La protectora accede a su listado de animales
+Selecciona un animal y pulsa editar
+Modifica los datos necesarios (la especie no es editable)
+El sistema guarda los cambios
+
+
+CU-13: Cambiar estado de un animal
+Actor: Protectora autenticada
+Precondición: El animal pertenece a la protectora
+Flujo principal:
+
+La protectora accede a su listado de animales
+Cambia el estado del animal (disponible, en evaluación, reservado, acogido, adoptado)
+El sistema actualiza el estado
+
+
+CU-14: Crear evento
+Actor: Protectora autenticada
+Precondición: La protectora ha iniciado sesión
+Flujo principal:
+
+La protectora accede a su panel de eventos
+Rellena título, descripción, tipo, fecha, hora, ubicación y plazas
+El sistema publica el evento
+
+
+CU-15: Inscribirse en un evento
+Actor: Usuario autenticado
+Precondición: El evento tiene plazas disponibles y es futuro
+Flujo principal:
+
+El usuario accede al listado de eventos
+Selecciona un evento y pulsa "Apuntarme"
+El sistema registra la inscripción y notifica a la protectora
+El usuario recibe confirmación
+
+Flujo alternativo: Si el evento está completo el sistema lo indica
+
+CU-16: Cancelar inscripción a evento
+Actor: Usuario autenticado
+Precondición: El usuario está inscrito y el evento no ha pasado
+Flujo principal:
+
+El usuario accede a "Mis eventos"
+Selecciona el evento y cancela la inscripción
+El sistema libera la plaza
+
+
+CU-17: Ver inscritos en un evento
+Actor: Protectora autenticada
+Precondición: El evento pertenece a la protectora
+Flujo principal:
+
+La protectora accede a su panel de eventos
+Selecciona un evento y pulsa "Ver inscritos"
+El sistema muestra el listado con nombre y email de cada inscrito
+
+
+CU-18: Solicitar voluntariado
+Actor: Usuario autenticado
+Precondición: El usuario ha iniciado sesión
+Flujo principal:
+
+El usuario accede a la ficha de una protectora
+Pulsa "Ser voluntario"
+Indica disponibilidad, intereses y mensaje opcional
+El sistema envía la solicitud y notifica a la protectora
+
+Flujo alternativo: Si ya tiene una solicitud pendiente en esa protectora el sistema lo indica
+
+CU-19: Gestionar solicitudes de voluntariado
+Actor: Protectora autenticada
+Precondición: La protectora tiene solicitudes de voluntariado
+Flujo principal:
+
+La protectora accede a su panel de voluntariado
+Revisa las solicitudes con disponibilidad e intereses de cada voluntario
+Acepta o rechaza cada solicitud
+Si acepta el usuario recibe una notificación y la protectora puede contactarle por email
+
+
+CU-20: Crear campaña de recaudación
+Actor: Protectora autenticada
+Precondición: La protectora ha iniciado sesión
+Flujo principal:
+
+La protectora accede a su panel de campañas
+Rellena título, descripción, objetivo económico y fecha de fin
+Vincula opcionalmente un animal de su protectora
+El sistema publica la campaña como activa
+
+
+CU-21: Donar a una campaña
+Actor: Usuario autenticado
+Precondición: La campaña está activa y el usuario ha iniciado sesión
+Flujo principal:
+
+El usuario accede a la ficha de una campaña
+Pulsa "Colaborar ahora"
+Introduce el importe y los datos de la tarjeta simulada
+El sistema procesa el pago
+Si la tarjeta termina en 0000 el pago falla, en caso contrario se completa
+La protectora recibe una notificación
+Si se alcanza el objetivo la campaña se cierra automáticamente
+
+
+CU-22: Publicar actualización de campaña
+Actor: Protectora autenticada
+Precondición: La campaña está activa y pertenece a la protectora
+Flujo principal:
+
+La protectora accede a su panel de campañas
+Pulsa "Publicar actualización"
+Rellena título, contenido e imagen opcional
+El sistema publica la actualización visible en la ficha pública de la campaña
+
+
+CU-23: Cerrar campaña
+Actor: Protectora autenticada
+Precondición: La campaña está activa y pertenece a la protectora
+Flujo principal:
+
+La protectora accede a su panel de campañas
+Pulsa "Cerrar campaña" y confirma
+El sistema cambia el estado a completada y deja de aceptar donaciones
+
+
+CU-24: Ver notificaciones
+Actor: Usuario o protectora autenticados
+Precondición: Hay notificaciones generadas
+Flujo principal:
+
+El actor accede a su panel de notificaciones
+Filtra entre todas o sin leer
+Puede marcar notificaciones individuales o todas como leídas
+
+
+CU-25: Subir imagen
+Actor: Protectora autenticada
+Precondición: La protectora está registrando o editando un animal o su perfil
+Flujo principal:
+
+La protectora selecciona una foto desde su ordenador
+El sistema la sube a Cloudinary
+Cloudinary devuelve una URL permanente
+El sistema guarda la URL en la base de datos
+
+
+Resumen por actor
+Usuario no registrado:
+  CU-01, CU-03, CU-06, CU-07
+
+Usuario autenticado:
+  CU-02, CU-05, CU-08, CU-09, CU-15,
+  CU-16, CU-18, CU-21
+
+Protectora autenticada:
+  CU-04, CU-10, CU-11, CU-12, CU-13,
+  CU-14, CU-17, CU-19, CU-20, CU-22,
+  CU-23, CU-25
+
+Ambos autenticados:
+  CU-24
