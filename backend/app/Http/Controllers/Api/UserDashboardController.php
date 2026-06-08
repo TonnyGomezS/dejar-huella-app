@@ -17,19 +17,19 @@ use Illuminate\Http\JsonResponse;
 
 class UserDashboardController extends Controller
 {
-    // Endpoint único que devuelve todo lo necesario para el dashboard
+    // Endpoint único que centraliza y unifica los datos iniciales para la optimización de carga del frontend
     public function summary(Request $request): JsonResponse
     {
         $user = User::where('api_token', $request->bearerToken())->firstOrFail();
 
-        // Solicitudes recientes con animal y protectora
+        // Recuperamos el historial reciente aplicando Nested Eager Loading para mitigar el problema de consultas N+1 en las vistas
         $requests = $user->requests()
             ->with('animal.shelter')
             ->latest()
             ->limit(5)
             ->get();
 
-        // Estadísticas
+        // Agregación de métricas cuantitativas del usuario
         $eventsCount = $user->eventRegistrations()
             ->where('status', EventRegistrationStatus::CONFIRMED)
             ->count();
@@ -49,7 +49,7 @@ class UserDashboardController extends Controller
                 ->where('status', EventRegistrationStatus::CONFIRMED)
                 ->count();
 
-        // Historia de éxito aleatoria
+        // Extraemos un caso de éxito de forma aleatoria directamente desde el motor de BD mediante optimización nativa
         $story = Animal::whereIn('status', [
                 AnimalStatus::ADOPTED,
                 AnimalStatus::FOSTERED,
@@ -59,7 +59,7 @@ class UserDashboardController extends Controller
             ->inRandomOrder()
             ->first();
 
-        // Campañas más cerca del objetivo
+        // Obtención y cálculo dinámico del top de campañas activas
         $campaigns = Campaign::where('status', CampaignStatus::ACTIVE)
             ->with('shelter', 'animal')
             ->get()
@@ -74,7 +74,7 @@ class UserDashboardController extends Controller
             })
             ->sortByDesc('progress_percent')
             ->take(4)
-            ->values();
+            ->values(); // Reindexado imperativo para evitar la conversión del JSON en objeto asociativo
 
         return response()->json([
             'requests'      => $requests,
@@ -112,7 +112,7 @@ class UserDashboardController extends Controller
         ]);
     }
 
-    // Total de solicitudes pendientes de todo tipo
+    // Desglose de contadores polimórficos de solicitudes pendientes
     public function pendingCount(Request $request): JsonResponse
     {
         $user = User::where('api_token', $request->bearerToken())->firstOrFail();
@@ -136,12 +136,14 @@ class UserDashboardController extends Controller
             'event_registrations' => $eventRegistrations,
         ]);
     }
+
+    // Listado histórico de asistencia a eventos
     public function eventsList(Request $request): JsonResponse
     {
         $user = User::where('api_token', $request->bearerToken())->firstOrFail();
 
         $registrations = $user->eventRegistrations()
-            ->with('event.shelter')
+            ->with('event.shelter') // Carga perezosa de la relación anidada para optimizar los recursos del servidor
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($registration) {
@@ -151,14 +153,17 @@ class UserDashboardController extends Controller
                     'event'  => $registration->event,
                 ];
             });
+            
         return response()->json($registrations);
     }
+
+    // Historial completo de transacciones/donaciones del usuario
     public function donationsList(Request $request): JsonResponse
     {
         $user = User::where('api_token', $request->bearerToken())->firstOrFail();
 
         $donations = $user->donations()
-            ->with('campaign.shelter', 'campaign.animal')
+            ->with('campaign.shelter', 'campaign.animal') // Eager loading de estructuras relacionales complejas
             ->orderBy('created_at', 'desc')
             ->get();
 

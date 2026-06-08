@@ -17,6 +17,7 @@ class CatCompatibilityService
         $score += $this->compatibilityWithAnimals($profile, $cat);
         $score += $this->compatibilityWithKids($profile, $cat);
 
+        // Uso max para que si la puntuación da negativa por los penalizadores, se quede en 0 y no rompa la lógica
         return max(0, $score);
     }
 
@@ -27,6 +28,7 @@ class CatCompatibilityService
         $age        = $cat->age_range->value;
         $sociability = $cat->sociability?->value ?? 'balanced';
 
+        // Para evitar meter 50 ifs anidados que harían el código ilegible, estructuro los puntos en un array multidimensional como una matriz de decisión
         $table = [
             'kitten' => [
                 'affectionate' => ['less_than_4' => -10, 'between_4_and_8' => 15, 'more_than_8' => 30],
@@ -45,6 +47,7 @@ class CatCompatibilityService
             ],
         ];
 
+        // El operador ?? nos protege devolviendo 0 si por algún motivo llega un valor null o no controlado en los enums
         return $table[$age][$sociability][$hours] ?? 0;
     }
 
@@ -115,6 +118,7 @@ class CatCompatibilityService
 
     public function label(int $score): string
     {
+        // Uso match(true) evaluando expresiones lógicas directamente en los brazos del match, lo cual es más limpio que hacer un switch tradicional o una cadena larga de if/else
         return match(true) {
             $score === 0  => 'Incompatibilidad total',
             $score <= 39  => 'Compatibilidad baja',

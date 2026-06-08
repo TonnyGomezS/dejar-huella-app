@@ -29,13 +29,13 @@ class EventController extends Controller
             $query->where('type', $request->type);
         }
 
-        // Por defecto solo eventos futuros
+        // Por defecto filtramos para mostrar solo eventos que no hayan pasado y los ordenamos cronológicamente
         $query->where('event_date', '>=', now());
         $query->orderBy('event_date', 'asc');
 
         $events = $query->paginate(12);
 
-        // Añadimos plazas disponibles a cada evento
+        // Añadimos las plazas disponibles dinámicamente mapeando la colección interna del paginador sin alterar el estado en la BD
         $events->getCollection()->transform(function ($event) {
             $event->available_spots = $event->hasAvailableSpots()
                 ? $event->max_volunteers - $event->confirmedVolunteersCount()
@@ -85,6 +85,7 @@ class EventController extends Controller
     {
         $shelter = $this->getAuthenticatedShelter($request);
 
+        // Control de acceso: verificamos que la protectora autenticada es la dueña del evento
         if ($event->shelter_id !== $shelter->id) {
             return response()->json([
                 'message' => 'No tienes permiso para editar este evento'
@@ -131,21 +132,23 @@ class EventController extends Controller
     {
         $user = $this->getAuthenticatedUser($request);
 
-        // Verificar que el evento no ha pasado
+        // Patrón Fail-Fast: Validamos todas las precondiciones restrictivas antes de ejecutar cualquier escritura en la base de datos
+        
+        // 1. Evitar inscripciones extemporáneas
         if ($event->event_date < now()) {
             return response()->json([
                 'message' => 'No puedes inscribirte en un evento pasado'
             ], 422);
         }
 
-        // Verificar plazas disponibles
+        // 2. Control de aforo basándonos en las relaciones del modelo Event
         if (!$event->hasAvailableSpots()) {
             return response()->json([
                 'message' => 'No quedan plazas disponibles para este evento'
             ], 422);
         }
 
-        // Verificar que no está ya inscrito
+        // 3. Control de duplicados (evitar que un usuario se apunte dos veces al mismo evento)
         $existingRegistration = EventRegistration::where('event_id', $event->id)
             ->where('user_id', $user->id)
             ->where('status', EventRegistrationStatus::CONFIRMED)
@@ -163,7 +166,7 @@ class EventController extends Controller
             'status'   => EventRegistrationStatus::CONFIRMED,
         ]);
 
-        // Notificar a la protectora
+        // Sistema de logs/notificaciones interno para mantener informada a la protectora
         Notification::create([
             'recipient_type' => 'Shelter',
             'recipient_id'   => $event->shelter_id,
@@ -194,6 +197,7 @@ class EventController extends Controller
             ], 404);
         }
 
+        // Cambiamos el estado a CANCELLED en lugar de hacer un delete físico para conservar el histórico y la trazabilidad de la asistencia
         $registration->update(['status' => EventRegistrationStatus::CANCELLED]);
 
         return response()->json([
@@ -201,7 +205,7 @@ class EventController extends Controller
         ]);
     }
 
-    // Ver inscritos en un evento
+    // Ver inscritos en un evento (Exclusivo para la protectora organizadora)
     public function registrations(Request $request, Event $event): JsonResponse
     {
         $shelter = $this->getAuthenticatedShelter($request);
@@ -214,7 +218,7 @@ class EventController extends Controller
 
         $registrations = EventRegistration::where('event_id', $event->id)
             ->where('status', EventRegistrationStatus::CONFIRMED)
-            ->with('user')
+            ->with('user') // Eager loading de la relación de usuarios para optimizar la consulta y evitar el problema de N+1
             ->get();
 
         return response()->json([

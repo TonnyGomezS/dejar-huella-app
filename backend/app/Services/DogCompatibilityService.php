@@ -17,6 +17,7 @@ class DogCompatibilityService
         $score += $this->compatibilityWithKids($profile, $dog);
         $score += $this->compatibilityWithAnimals($profile, $dog);
 
+        // Uso max para curarme en salud y que la puntuación nunca sea negativa con las penalizaciones
         return max(0, $score);
     }
 
@@ -27,6 +28,7 @@ class DogCompatibilityService
         $size     = $dog->size?->value ?? 'medium';
         $activity = $dog->activity_level?->value ?? 'medium';
 
+        // Mapeo las puntuaciones en una matriz con un array para no meter veinte millones de ifs empotrados
         $table = [
             'small' => [
                 'low'    => ['apartment' => 40, 'house_no_garden' => 40, 'house_with_garden' => 40],
@@ -127,6 +129,7 @@ class DogCompatibilityService
             $score += $dog->good_with_dogs ? 5 : -10;
         }
 
+        // Si el usuario no tiene más animales en casa, se lleva una puntuación neutra (la mitad de este bloque)
         if ($checks === 0) return 5;
 
         return $score;
@@ -134,6 +137,7 @@ class DogCompatibilityService
 
     public function label(int $score): string
     {
+        // Truco usando match(true) para evaluar condiciones y rangos numéricos directamente
         return match(true) {
             $score === 0  => 'Incompatibilidad total',
             $score <= 39  => 'Compatibilidad baja',

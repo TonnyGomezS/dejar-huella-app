@@ -25,6 +25,7 @@ class CatProfile extends Model
     ];
 
     protected $casts = [
+        // Convertimos a los objetos Enum directamente para poder hacer la lógica de compatibilidad con el algoritmo del match
         'hours_at_home'    => AnimalMaxHoursAlone::class,
         'experience_level' => AnimalExperienceLevel::class,
         'companion_type'   => CatCompanionType::class,

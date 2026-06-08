@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <--- IMPORTANTE: Importa Auth
+use Illuminate\Support\Facades\Auth;
 
 class SimpleAuth
 {
@@ -23,8 +23,7 @@ class SimpleAuth
             return response()->json(['message' => 'Token inválido'], 401);
         }
 
-        // --- LA LÍNEA MÁGICA ---
-        // Esto le dice a Laravel: "El usuario logueado es este"
+        // Autenticamos al usuario manualmente en el estado de la petición para poder usar el helper Auth::user() en los controladores de la API
         Auth::login($user);
 
         return $next($request);

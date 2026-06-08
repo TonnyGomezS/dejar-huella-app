@@ -148,7 +148,7 @@ class CompatibilityController extends Controller
                 'compatibility' => $score,
                 'label'         => $service->label($score),
             ];
-        })->sortByDesc('compatibility')->values();
+        })->sortByDesc('compatibility')->values(); // values() resetea las claves del array tras el ordenamiento para garantizar que la respuesta JSON sea un array nativo [] y no un objeto {}
 
         return response()->json($results);
     }

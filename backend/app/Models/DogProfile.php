@@ -22,6 +22,7 @@ class DogProfile extends Model
     ];
 
     protected $casts = [
+        // Casteamos a enums para mapear las opciones fijas del formulario y poder compararlas en la lógica del match
         'housing_type'     => DogHousingType::class,
         'free_time'        => DogFreeTime::class,
         'experience_level' => AnimalExperienceLevel::class,

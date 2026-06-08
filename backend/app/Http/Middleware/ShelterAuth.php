@@ -23,6 +23,7 @@ class ShelterAuth
             return response()->json(['message' => 'Token inválido'], 401);
         }
 
+        // Forzamos a Laravel a iniciar sesión manualmente en el guard de la protectora para poder usar Auth::user() en los controladores
         Auth::guard('shelter')->setUser($shelter);
 
         return $next($request);

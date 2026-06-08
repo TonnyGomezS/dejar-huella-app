@@ -35,6 +35,7 @@ class CampaignController extends Controller
 
         $campaigns = $query->orderBy('created_at', 'desc')->paginate(12);
 
+        // Modificamos la colección interna del paginador para inyectar campos calculados sin romper la estructura de la paginación de Laravel
         $campaigns->getCollection()->transform(function ($campaign) {
             $campaign->raised_amount    = $campaign->raisedAmount();
             $campaign->progress_percent = $campaign->progressPercentage();
@@ -188,11 +189,11 @@ class CampaignController extends Controller
             'cvv'         => 'required|digits:3',
         ]);
 
-        // Simulamos el pago: si termina en 0000 falla, si no completa
+        // Simulamos el comportamiento de una pasarela externa: si la tarjeta termina en '0000' simulamos un fallo de fondos para testear el flujo de errores
         $lastFour      = substr($validated['card_number'], -4);
         $paymentStatus = $lastFour === '0000' ? PaymentStatus::FAILED : PaymentStatus::COMPLETED;
 
-        // Los datos de tarjeta nunca se guardan
+        // Los datos sensibles de la tarjeta se procesan pero jamás se almacenan en la base de datos
         $donation = Donation::create([
             'campaign_id'    => $campaign->id,
             'user_id'        => $user->id,
@@ -277,6 +278,7 @@ class CampaignController extends Controller
         return Shelter::where('api_token', $request->bearerToken())->firstOrFail();
     }
 
+    // Obtener las campañas más cercanas a cumplir su objetivo de recaudación
     public function nearGoal(): JsonResponse
     {
         $campaigns = Campaign::where('status', CampaignStatus::ACTIVE)
@@ -293,7 +295,7 @@ class CampaignController extends Controller
             })
             ->sortByDesc('progress_percent')
             ->take(4)
-            ->values();
+            ->values(); // Reseteamos los índices tras ordenar para que la respuesta JSON mantenga un formato de array indexado ordenado
 
         return response()->json($campaigns);
     }
