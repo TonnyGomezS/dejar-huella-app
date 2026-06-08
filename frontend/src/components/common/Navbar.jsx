@@ -5,6 +5,8 @@ import { useShelter } from '../../context/ShelterContext'
 import UserSidebar from './UserSidebar'
 import ShelterSidebar from './ShelterSidebar'
 
+const LOGO_URL = 'https://res.cloudinary.com/duqpywxbl/image/upload/v1780886255/Gemini_Generated_Image_l5jxwll5jxwll5jx_dvejzf.png'
+
 function Dropdown({ label, items }) {
     const [open, setOpen] = useState(false)
     const ref = useRef()
@@ -28,7 +30,7 @@ function Dropdown({ label, items }) {
         >
             <button className="flex items-center gap-1 text-gray-600 hover:text-indigo-600 text-sm font-medium transition-colors py-2">
                 {label}
-                <svg className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`}
+                <svg className={'w-3 h-3 transition-transform ' + (open ? 'rotate-180' : '')}
                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -70,47 +72,48 @@ export default function Navbar() {
                             to={token || shelterToken ? (shelterToken ? '/shelter/dashboard' : '/dashboard') : '/'}
                             className="flex items-center gap-2"
                         >
-                            <span className="text-2xl">🐾</span>
-                            <span className="font-bold text-indigo-600 text-lg hidden sm:block">
-                                Deja tu Huella
-                            </span>
+                            <img
+                                src={LOGO_URL}
+                                alt="Deja tu Huella"
+                                className="h-10 w-auto object-contain"
+                            />
                         </Link>
 
                         {/* Navegación central */}
-                        <div className="hidden md:flex items-center gap-1">
+                        <div className="hidden md:flex items-center gap-6">
 
                             {/* Protectora logueada → enlaces de gestión */}
                             {shelterToken && shelter && (
                                 <>
                                     <Link
                                         to="/shelter/animals"
-                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors px-3 py-2"
+                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors"
                                     >
                                         Mis animales
                                     </Link>
                                     <Link
                                         to="/shelter/requests"
-                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors px-3 py-2"
+                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors"
                                     >
-                                        Solicitudes pendientes
+                                        Solicitudes
                                     </Link>
                                     <Link
                                         to="/shelter/events"
-                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors px-3 py-2"
+                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors"
                                     >
                                         Mis eventos
                                     </Link>
                                     <Link
                                         to="/shelter/campaigns"
-                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors px-3 py-2"
+                                        className="text-gray-600 hover:text-amber-600 text-sm font-medium transition-colors"
                                     >
                                         Mis campañas
                                     </Link>
                                 </>
                             )}
 
-                            {/* Usuario logueado o sin sesión → enlaces públicos */}
-                            {!shelterToken && (
+                            {/* Usuario logueado → enlaces públicos */}
+                            {token && !shelterToken && (
                                 <>
                                     <Dropdown
                                         label="Explorar"
@@ -123,13 +126,13 @@ export default function Navbar() {
                                     <Dropdown
                                         label="Comunidad"
                                         items={[
-                                            { to: '/events',    icon: '📅', label: 'Eventos'   },
-                                            { to: '/campaigns', icon: '💰', label: 'Campañas'  },
+                                            { to: '/events',    icon: '📅', label: 'Eventos'  },
+                                            { to: '/campaigns', icon: '💰', label: 'Campañas' },
                                         ]}
                                     />
                                     <Link
                                         to="/como-funciona"
-                                        className="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-colors px-3 py-2"
+                                        className="text-gray-600 hover:text-indigo-600 text-sm font-medium transition-colors"
                                     >
                                         Cómo funciona
                                     </Link>
@@ -170,20 +173,20 @@ export default function Navbar() {
                                 </button>
                             )}
 
-                            {/* Sin sesión */}
+                            {/* Sin sesión → navbar simplificado */}
                             {!token && !shelterToken && (
                                 <>
-                                    <Link to="/login"
-                                        className="text-sm text-gray-600 hover:text-indigo-600 font-medium transition-colors">
-                                        Iniciar sesión
+                                    <Link
+                                        to="/login"
+                                        className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                                    >
+                                        Inicio sesión / Registro
                                     </Link>
-                                    <Link to="/register"
-                                        className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                                        Registrarse
-                                    </Link>
-                                    <Link to="/shelters/login"
-                                        className="text-sm border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
-                                        Soy protectora
+                                    <Link
+                                        to="/shelters/login"
+                                        className="text-sm border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
+                                    >
+                                        Acceso protectoras
                                     </Link>
                                 </>
                             )}

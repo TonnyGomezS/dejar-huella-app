@@ -1,15 +1,28 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
 
 export default function ShelterList() {
-    const [shelters, setShelters]   = useState([])
-    const [loading, setLoading]     = useState(true)
-    const [search, setSearch]       = useState('')
-    const [filters, setFilters]     = useState({
+    const { token } = useAuth()
+
+    const [shelters, setShelters] = useState([])
+    const [loading, setLoading]   = useState(true)
+    const [search, setSearch]     = useState('')
+    const [filters, setFilters]   = useState({
         autonomous_community: '',
         province: '',
     })
+
+    const [volunteerModal, setVolunteerModal] = useState(null)
+    const [volunteerForm, setVolunteerForm]   = useState({
+        availability: '',
+        interests:    '',
+        message:      '',
+    })
+    const [sending, setSending]   = useState(false)
+    const [success, setSuccess]   = useState(false)
+    const [error, setError]       = useState(null)
 
     useEffect(() => {
         fetchShelters()
@@ -22,7 +35,7 @@ export default function ShelterList() {
             if (filters.autonomous_community) params.append('autonomous_community', filters.autonomous_community)
             if (filters.province)             params.append('province', filters.province)
 
-            const { data } = await api.get(`/shelters?${params.toString()}`)
+            const { data } = await api.get('/shelters?' + params.toString())
             setShelters(data.data || data || [])
         } catch (e) {
             console.error(e)
@@ -31,7 +44,35 @@ export default function ShelterList() {
         }
     }
 
-    // Filtro de búsqueda por nombre en el frontend
+    const handleVolunteer = async () => {
+        setError(null)
+        if (!volunteerForm.availability) return setError('Indica tu disponibilidad')
+        if (!volunteerForm.interests)    return setError('Indica tus intereses')
+
+        setSending(true)
+        try {
+            await api.post('/shelters/' + volunteerModal.id + '/volunteer', volunteerForm)
+            setSuccess(true)
+        } catch (e) {
+            setError(e.response?.data?.message || 'Error al enviar la solicitud')
+        } finally {
+            setSending(false)
+        }
+    }
+
+    const handleOpenModal = (shelter) => {
+        setVolunteerModal(shelter)
+        setVolunteerForm({ availability: '', interests: '', message: '' })
+        setSuccess(false)
+        setError(null)
+    }
+
+    const handleCloseModal = () => {
+        setVolunteerModal(null)
+        setSuccess(false)
+        setError(null)
+    }
+
     const filteredShelters = shelters.filter(shelter =>
         shelter.name.toLowerCase().includes(search.toLowerCase()) ||
         shelter.address?.toLowerCase().includes(search.toLowerCase())
@@ -162,18 +203,142 @@ export default function ShelterList() {
                                         </p>
                                     )}
 
-                                    <Link
-                                        to={`/shelters/${shelter.id}`}
-                                        className="block text-center text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 rounded-xl transition-colors"
-                                    >
-                                        Ver protectora
-                                    </Link>
+                                    <div className="flex flex-col gap-2">
+                                        <Link
+                                            to={'/shelters/' + shelter.id}
+                                            className="block text-center text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 rounded-xl transition-colors"
+                                        >
+                                            Ver protectora
+                                        </Link>
+
+                                        {token && (
+                                            <button
+                                                onClick={() => handleOpenModal(shelter)}
+                                                className="block w-full text-center text-sm border border-amber-300 text-amber-600 hover:bg-amber-50 font-medium py-2.5 rounded-xl transition-colors"
+                                            >
+                                                🙋 Ser voluntario
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Modal voluntariado */}
+            {volunteerModal && (
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+
+                        {success ? (
+                            <div className="text-center py-6">
+                                <span className="text-5xl">✅</span>
+                                <h3 className="font-bold text-gray-800 text-lg mt-4 mb-2">
+                                    ¡Solicitud enviada!
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    La protectora {volunteerModal.name} revisará tu solicitud pronto.
+                                </p>
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition-colors"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <h3 className="font-bold text-gray-800 text-lg mb-1">
+                                    Solicitar voluntariado
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-5">
+                                    en {volunteerModal.name}
+                                </p>
+
+                                <div className="flex flex-col gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                            Disponibilidad <span className="text-red-400">*</span>
+                                        </label>
+                                        <div className="flex flex-col gap-2">
+                                            {[
+                                                { value: 'mornings',   label: 'Mañanas',         icon: '🌅' },
+                                                { value: 'afternoons', label: 'Tardes',           icon: '🌇' },
+                                                { value: 'weekends',   label: 'Fines de semana', icon: '📅' },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => setVolunteerForm(prev => ({ ...prev, availability: opt.value }))}
+                                                    className={'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm transition-colors ' + (
+                                                        volunteerForm.availability === opt.value
+                                                            ? 'bg-amber-500 text-white border-amber-500'
+                                                            : 'border-gray-200 text-gray-600 hover:border-amber-300'
+                                                    )}
+                                                >
+                                                    <span>{opt.icon}</span>
+                                                    <span>{opt.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                            Intereses <span className="text-red-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={volunteerForm.interests}
+                                            onChange={e => setVolunteerForm(prev => ({ ...prev, interests: e.target.value }))}
+                                            placeholder="Ej: paseos, cuidados, eventos, redes sociales..."
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                            Mensaje
+                                            <span className="text-gray-400 font-normal ml-1">(opcional)</span>
+                                        </label>
+                                        <textarea
+                                            value={volunteerForm.message}
+                                            onChange={e => setVolunteerForm(prev => ({ ...prev, message: e.target.value }))}
+                                            placeholder="Cuéntanos sobre ti y por qué quieres colaborar..."
+                                            rows={3}
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mt-4 text-sm">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={handleCloseModal}
+                                        className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleVolunteer}
+                                        disabled={sending}
+                                        className="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-xl text-sm font-medium transition-colors"
+                                    >
+                                        {sending ? 'Enviando...' : 'Enviar solicitud'}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
